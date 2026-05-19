@@ -248,22 +248,28 @@ def get_mic_index():
 
     for i, name in enumerate(mic_list):
 
-        # check different Realtek microphone names
+        # convert microphone name to lowercase
+        # helps detect more Realtek microphone variations
+        mic_name = name.lower()
+
+        # auto detect Realtek microphones
         #
-        # your microphone name may be different
-        # print(mic_list) to see all microphone names
-        if "Realtek HD Audio Mic Array" in name:
+        # works for:
+        # - Realtek HD Audio
+        # - Realtek(R) Audio
+        # - Microphone Array
+        # - laptop microphones
+        if "realtek" in mic_name:
             return i
 
-        if "Microphone Array (Realtek" in name:
-            return i
-
-        if "Realtek(R) Audio" in name:
+        # fallback for generic microphone arrays
+        if "microphone" in mic_name:
             return i
 
     return None
 
 
+# take voice command
 # take voice command
 def takeCommand():
 
@@ -283,13 +289,32 @@ def takeCommand():
     # 150 → quiet room
     # 300 → balanced
     # 500+ → noisy room
-    r.energy_threshold = 300
-
-    # disable auto energy adjustment so manual threshold above is always used
     #
-    # True  → auto adjusts sensitivity
+    # 200 works very well for Indian accents
+    # because softer pronunciations get detected easier
+    r.energy_threshold = 200
+
+    # dynamic energy threshold
+    #
+    # True  → automatically adjusts microphone sensitivity
     # False → uses fixed threshold value above
-    r.dynamic_energy_threshold = False
+    #
+    # True is recommended for:
+    # - Indian English accents
+    # - changing voice volume
+    # - noisy environments
+    r.dynamic_energy_threshold = True
+
+    # pause threshold
+    #
+    # controls how long Nexaura waits
+    # before assuming you stopped speaking
+    #
+    # lower value  → faster response
+    # higher value → allows longer pauses while speaking
+    #
+    # 1.2 works well for Indian English speech pattern
+    r.pause_threshold = 1.2
 
     mic_index = get_mic_index()
 
@@ -312,7 +337,10 @@ def takeCommand():
             # 0.5 → quiet room
             # 1.0 → balanced
             # 2.0 → noisy room
-            r.adjust_for_ambient_noise(source, duration=1)
+            #
+            # 2 seconds recommended for better
+            # Indian accent recognition accuracy
+            r.adjust_for_ambient_noise(source, duration=2)
 
             print("Listening...")
 
@@ -333,18 +361,26 @@ def takeCommand():
             # phrase_time_limit=3  → short commands                                #
             # phrase_time_limit=5  → balanced                                      #
             # phrase_time_limit=10+ → long AI conversations                        #
-            audio = r.listen(source, timeout=4, phrase_time_limit=5)
+            #
+            # slightly increased phrase limit
+            # helps Indian English sentence completion
+            audio = r.listen(source, timeout=5, phrase_time_limit=7)
             # ─────────────────────────────────────────────────────────────────────#
 
             print("Recognizing...")
 
             # convert voice into text using Google Speech Recognition
-            # 'en-in' → Indian English
-            # 'en-us' → American English
-            # 'en-gb' → British English
-            # change language if recognition accuracy is poor
+            # 'en-IN' → Indian English
+            # 'en-US' → American English
+            # 'en-GB' → British English
+            #
+            # en-IN gives best results for:
+            # - Indian pronunciation
+            # - Hinglish words
+            # - Indian names
+            # - mixed Indian English speech
+            query = r.recognize_google(audio, language='en-IN')
 
-            query = r.recognize_google(audio, language='en-in')
             print("User said:", query)
 
             return query.lower()
@@ -357,6 +393,7 @@ def takeCommand():
     except sr.UnknownValueError:
         # triggered when speech was unclear
         print("Could not understand audio")
+        sayAndWait("Sorry Sam, I could not understand")
         return ""
 
     except Exception as e:
@@ -555,30 +592,3 @@ if __name__ == '__main__':
 # Telegram  : https://t.me/Sameer161127
 
 
-# ──────────────────────────────────────────────────────────────#
-#                    NEXAURA — SNEAK PEAK                       #
-# ──────────────────────────────────────────────────────────────#
-#                                                               #
-# Upcoming Features Planned For Nexaura AI:                     #
-#                                                               #
-# • Face Recognition Login                                      #
-# • Fully Animated GUI                                          #
-# • Custom Wake Word Detection                                  #
-# • AI Vision (Camera Understanding)                            #
-# • Smart Automation System                                     #
-# • Memory Based Conversations                                  #
-# • Emotion Detection                                           #
-# • PC Control With Gestures                                    #
-# • AI Generated PPT & Notes                                    #
-# • Advanced Multi-AI Support                                   #
-# • Personal Assistant Dashboard                                #
-# • Voice Authentication Security                               #
-# • Real-Time Weather & News                                    #
-# • Mobile App Connectivity                                     #
-#                                                               #
-# Nexaura is planned to be:                                     #
-# "More than an assistant — a complete AI ecosystem."           #
-#                                                               #
-# Status: Under Development 🚀                                  #
-# Creator: Sameer Patra                                         #
-# ──────────────────────────────────────────────────────────────#
