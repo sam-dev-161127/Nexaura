@@ -21,12 +21,12 @@ is_speaking = False
 stop_requested = False
 
 # store chat history
-# stores previous conversation between user and Jarvis
+# stores previous conversation between user and Nexaura
 # helps AI remember conversation context
 #
 # example:
 # Sam: hello
-# Jarvis: hi
+# Nexaura: hi
 chatStr = ""
 
 # AI mode toggle
@@ -47,7 +47,7 @@ genai.configure(api_key=config.API_KEY)
 # create Gemini model
 # flash → faster responses
 # pro   → smarter but slower
-# flash is recommended for Jarvis assistants
+# flash is recommended for nexaura assistants
 model = genai.GenerativeModel("gemini-2.5-flash")
 
 
@@ -90,7 +90,7 @@ def sayAndWait(text):
     if stop_requested:
         return
 
-    print("Jarvis:", text)
+    print("Nexaura :", text)
     is_speaking = True
 
     # split long AI response into smaller chunks
@@ -138,7 +138,7 @@ def stopSpeaking():
         # SVSFPurgeBeforeSpeak flag (3) = clear queue and stop current speech instantly
         speaker.Speak("", 3)
 
-        print("Jarvis stopped speaking")
+        print("Nexaura stopped speaking")
 
     except Exception as e:
         print("Stop error:", e)
@@ -163,7 +163,7 @@ def aiChat(query):
     stop_requested = False
 
     # store user query into conversation memory
-    chatStr += f"Sam: {query}\nJarvis: "
+    chatStr += f"Sam: {query}\nNexaura: "
 
     # send full conversation to Gemini AI
     response = model.generate_content(chatStr)
@@ -210,7 +210,7 @@ def aiChat(query):
 def useAI(query):
     global ai_enabled
 
-    # stop Jarvis voice immediately — checked FIRST so it always works
+    # stop Nexaura voice immediately — checked FIRST so it always works
     if "stop" in query:
         stopSpeaking()
         return True
@@ -277,7 +277,7 @@ def takeCommand():
     # - fan noise triggers false listening
     # - keyboard sounds activate microphone
     # decrease (100–250) if:
-    # - Jarvis is not detecting your voice
+    # - Nexaura is not detecting your voice
     # - microphone volume is low
     # common range:
     # 150 → quiet room
@@ -317,11 +317,11 @@ def takeCommand():
             print("Listening...")
 
             # ── LISTENING TIME SETTINGS ──────────────────────────────────────────#
-            # timeout          → seconds Jarvis waits for you to START speaking    #
+            # timeout          → seconds Nexaura waits for you to START speaking    #
             #                    increase if you need more time before you begin   #
             #                    decrease for faster timeout                       #
             #                                                                      #
-            # phrase_time_limit → seconds Jarvis listens after you START speaking  #
+            # phrase_time_limit → seconds Nexaura listens after you START speaking  #
             #                    increase if your commands are long                #
             #                    decrease if you want faster response              #
             #                                                                      #
@@ -367,8 +367,8 @@ def takeCommand():
 
 # start program
 if __name__ == '__main__':
-    print("Jarvis started")
-    sayAndWait("I am Jarvis AI")
+    print("Nexaura started")
+    sayAndWait("I am Nexaura AI")
 
     # websites list (you can add more sites)
     # format:
@@ -444,7 +444,7 @@ if __name__ == '__main__':
     ]
 
     # infinite loop for continuous listening
-    # Jarvis keeps running until:
+    # Nexaura keeps running until:
     # - terminal is closed
     # - program is stopped
     # - PC shuts down
@@ -465,7 +465,7 @@ if __name__ == '__main__':
         if useAI(query):
             continue
 
-        # open websites — sayAndWait so Jarvis finishes speaking before browser opens
+        # open websites — sayAndWait so Nexaura finishes speaking before browser opens
         for site in sites:
             if f"open {site[0]}" in query:
                 sayAndWait("Opening " + site[0])
@@ -481,7 +481,7 @@ if __name__ == '__main__':
                 command_matched = True
                 break  # ← FIX: stop after first match
 
-        # open games — sayAndWait so Jarvis finishes speaking before game launches
+        # open games — sayAndWait so Nexaura finishes speaking before game launches
         for game in games:
             if f"open {game[0]}" in query:
                 sayAndWait("Opening " + game[0])
@@ -489,7 +489,7 @@ if __name__ == '__main__':
                 command_matched = True
                 break  # ← FIX: stop after first match
 
-        # open apps — sayAndWait so Jarvis finishes speaking before app launches
+        # open apps — sayAndWait so Nexaura finishes speaking before app launches
         for app in Apps:
             if f"open {app[0]}" in query:
                 sayAndWait("Opening " + app[0])
