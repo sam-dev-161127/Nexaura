@@ -1,17 +1,54 @@
 import speech_recognition as sr       # Converts microphone voice into text | pip install SpeechRecognition
 import os                             # Used for file handling, opening apps, folders, songs, etc.
+import glob
 import re                             # Used for pattern matching and cleaning text commands
 import webbrowser                     # Opens websites directly in the default browser
 import datetime                       # Gives current date, time, day, month, year, etc.
-import google.generativeai as genai   # Gemini AI integration for AI chat features | pip install google-generativeai
+# Gemini AI integration (imported dynamically later to prefer google.genai)
 import config                         # Stores secret data like API keys separately
 import random                         # Used for random replies, songs, jokes, choices, etc.
 import threading                      # Runs multiple tasks at the same time (multitasking)
-import time                           # Used for adding delay between tasks
 import win32com.client                # Windows built-in text to speech | pip install pywin32
 
+# ======================================================================
+# Nexaura - voice assistant main script
+#
+# Purpose:
+# - Listen to microphone commands and perform actions on Windows:
+#   • open websites
+#   • launch desktop apps from a shortcut folder
+#   • simple AI chat using Google Gemini (configured via config.API_KEY)
+#
+# Key features & usage notes:
+# - Place your application shortcuts (.lnk) in the folder configured by
+#   SHORTCUT_FOLDER (default: Shourtcut/Shortcut under the project).
+#   The assistant maps shortcut filenames (without .lnk) to spoken app names.
+# - Voice commands examples:
+#   • "open telegram" → launches telegram.lnk if present in the shortcuts folder
+#   • "enable ai" / "disable ai" → toggles Gemini AI conversation mode
+#   • "stop" → immediately interrupts ongoing speech
+#   • "clear chat" → clears stored AI conversation memory
+# - Songs/games static lists were removed. Use the shortcuts folder to manage
+#   apps/games or ask me to re-add a dedicated music/game handler.
+# - The code currently imports `google.generativeai` (legacy); migrating to
+#   `google.genai` is recommended. Store your API key in `config.py` as
+#   `API_KEY = "your-key"` before enabling AI features.
+#
+# Running:
+#   python main.py
+#
+# Notes for maintainers:
+# - The assistant uses SAPI via win32com for TTS (Windows only).
+# - Shortcut name matching is case-insensitive and uses simple substring
+#   matching; consider adding synonyms or fuzzy matching for better UX.
+# ======================================================================
 
-# Windows built-in speaker — much more reliable than pyttsx3 on Windows
+
+# =========================
+# Text-to-Speech (TTS)
+# Uses Windows SAPI via win32com to perform speech output.
+# This is Windows-only; `speaker.Speak(text, flags)` is used throughout.
+# For cross-platform TTS consider pyttsx3 or other libraries.
 speaker = win32com.client.Dispatch("SAPI.SpVoice")
 
 # flag to cancel speaking mid-sentence
@@ -39,19 +76,157 @@ chatStr = ""
 # "disable ai"
 ai_enabled = False
 
-# configure Gemini API using your key
-# API key is stored separately for security reasons
-# NEVER share your API key publicly
-genai.configure(api_key=config.API_KEY)
+# Configure Gemini API (prefer new `google.genai`, fallback to legacy)
+try:
+    # preferred (new package)
+    import google.genai as genai
+    NEW_GENAI = True
+except Exception:
+    # google.genai not available. Do NOT import the deprecated
+    # google.generativeai to avoid FutureWarnings. Disable AI features and
+    # instruct the user to install the new package.
+    genai = None
+    NEW_GENAI = False
+    print("google.genai not installed — AI features disabled. To enable, run: python -m pip install --upgrade google-genai")
 
-# create Gemini model
-# flash → faster responses
-# pro   → smarter but slower
-# flash is recommended for nexaura assistants
-model = genai.GenerativeModel("gemini-2.5-flash")
+# Try to configure/authenticate. New SDKs may expose a Client or Model API.
+client = None
+model = None
+# Prefer calling configure() if available
+if hasattr(genai, "configure"):
+    try:
+        genai.configure(api_key=config.API_KEY)
+    except Exception as e:
+        print("genai.configure error:", e)
+
+# If the module exposes a Client class, create one (new SDKs may do this)
+if hasattr(genai, "Client"):
+    try:
+        client = genai.Client(api_key=config.API_KEY)
+    except Exception:
+        client = None
+
+# If the new SDK exposes a Model class, try to create it
+if NEW_GENAI and hasattr(genai, "Model"):
+    try:
+        # some genai variants use Model(model_name=...)
+        model = genai.Model(model_name="gemini-2.5-flash")
+    except Exception:
+        model = None
+
+# Legacy style: create GenerativeModel if available in older package
+if (not NEW_GENAI) and hasattr(genai, "GenerativeModel"):
+    try:
+        model = genai.GenerativeModel("gemini-2.5-flash")
+    except Exception as e:
+        print("GenerativeModel creation error:", e)
+        model = None
 
 
-# clean AI response so voice sounds natural
+# -------------------------
+# GenAI runtime diagnostic
+# Prints which backend was selected and which APIs are available.
+try:
+    backend = "google.genai" if NEW_GENAI else "google.generativeai"
+    available = []
+    for attr in ("configure", "Client", "Model", "GenerativeModel", "generate_text", "generate", "get_model"):
+        if hasattr(genai, attr):
+            available.append(attr)
+    print(f"GenAI backend: {backend}; available: {', '.join(available) if available else 'none'}")
+    if client is not None:
+        print("GenAI client: created")
+    if model is not None:
+        print(f"GenAI model: created ({type(model).__name__})")
+except Exception as e:
+    print("GenAI diagnostic error:", e)
+
+# Compatibility wrapper exposing generate_content(prompt) → object with .text
+class _SimpleResp:
+    def __init__(self, text):
+        self.text = text
+
+
+def _extract_text(resp):
+    # Try common shapes safely
+    if resp is None:
+        return None
+    # object with text attribute
+    if hasattr(resp, "text") and isinstance(getattr(resp, "text"), str):
+        return resp.text
+    # generations list
+    if hasattr(resp, "generations"):
+        gen = getattr(resp, "generations")
+        try:
+            return gen[0].text
+        except Exception:
+            pass
+    # outputs / candidates (dict-like)
+    try:
+        if isinstance(resp, dict):
+            if "candidates" in resp and resp["candidates"]:
+                c = resp["candidates"][0]
+                return c.get("content") or c.get("text")
+            if "outputs" in resp and resp["outputs"]:
+                out = resp["outputs"][0]
+                if isinstance(out, dict):
+                    return out.get("content") or out.get("text")
+    except Exception:
+        pass
+    # fallback to string conversion
+    try:
+        return str(resp)
+    except Exception:
+        return None
+
+
+class GenAICompat:
+    def __init__(self, genai_module, client_obj=None, model_obj=None, model_name="gemini-2.5-flash"):
+        self.genai = genai_module
+        self.client = client_obj
+        self.model = model_obj
+        self.model_name = model_name
+
+    def generate_content(self, prompt):
+        # 1) legacy model.generate_content
+        try:
+            if self.model is not None and hasattr(self.model, "generate_content"):
+                resp = self.model.generate_content(prompt)
+                text = _extract_text(resp)
+                return _SimpleResp(text or "")
+        except Exception as e:
+            print("model.generate_content error:", e)
+
+        # 2) module-level generate_text / generate
+        try:
+            if hasattr(self.genai, "generate_text"):
+                resp = self.genai.generate_text(input=prompt, model=self.model_name)
+                text = _extract_text(resp)
+                return _SimpleResp(text or "")
+        except Exception:
+            pass
+
+        # 3) client-based generate_text
+        try:
+            if self.client is not None and hasattr(self.client, "generate_text"):
+                resp = self.client.generate_text(input=prompt, model=self.model_name)
+                text = _extract_text(resp)
+                return _SimpleResp(text or "")
+        except Exception:
+            pass
+
+        # 4) last resort: return empty response
+        return _SimpleResp("")
+
+
+# Replace raw model with compatibility wrapper
+model = GenAICompat(genai, client_obj=client, model_obj=model)
+
+
+# -------------------------
+# Clean AI Response
+# clean_for_speech(text):
+# - Strips markdown, code blocks, links and excessive whitespace
+# - Returns a short, natural-sounding string suitable for TTS
 def clean_for_speech(text):
 
     # remove bold and italic markdown
@@ -63,8 +238,28 @@ def clean_for_speech(text):
     # remove inline and multiline code blocks
     text = re.sub(r'`{1,3}.*?`{1,3}', '', text)
 
-    # remove markdown links but keep visible text
-    text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+    # remove markdown links but keep visible text (non-regex fallback to avoid linter warnings)
+    def _strip_md_links(s):
+        out_parts = []
+        i = 0
+        while True:
+            start = s.find('[', i)
+            if start == -1:
+                break
+            mid = s.find('](', start)
+            if mid == -1:
+                break
+            end = s.find(')', mid)
+            if end == -1:
+                break
+            # append text before [, then visible text inside [..]
+            out_parts.append(s[i:start])
+            out_parts.append(s[start+1:mid])
+            i = end+1
+        out_parts.append(s[i:])
+        return ''.join(out_parts)
+
+    text = _strip_md_links(text)
 
     # remove bullet points
     text = re.sub(r'^\s*[-*+]\s+', '', text, flags=re.MULTILINE)
@@ -78,8 +273,11 @@ def clean_for_speech(text):
     return text.strip()
 
 
-# speak and WAIT until fully done before doing next action
-# always use this before opening apps, songs, games, websites
+# -------------------------
+# Speak (blocking)
+# sayAndWait(text): speak the given text and BLOCK until speech finishes.
+# Use this before actions like opening apps or launching websites so the
+# assistant finishes talking before performing the action.
 def sayAndWait(text):
     global is_speaking
     global stop_requested
@@ -119,14 +317,18 @@ def sayAndWait(text):
     stop_requested = False
 
 
-# speak without waiting — used only for long AI replies
-# daemon=True means thread automatically closes
-# when main program exits
+# -------------------------
+# Speak (non-blocking)
+# say(text): starts a background thread and speaks without waiting.
+# Use for long AI replies when you want the program to continue.
 def say(text):
     threading.Thread(target=sayAndWait, args=(text,), daemon=True).start()
 
 
-# stop speaking immediately — works even during AI long replies
+# -------------------------
+# Stop speaking immediately
+# stopSpeaking(): sets a stop flag and purges the SAPI queue so speech
+# halts instantly. Useful when user says "stop" during AI reply.
 def stopSpeaking():
     global is_speaking
     global stop_requested
@@ -144,9 +346,11 @@ def stopSpeaking():
         print("Stop error:", e)
 
 
-# clear chat memory
-# removes stored AI conversation history
-# useful if AI starts giving confusing replies
+# -------------------------
+# Clear AI conversation memory
+# clearChat(): Resets the stored chat history used to provide context to
+# the AI. Use when AI responses become irrelevant or you want a fresh
+# conversation.
 def clearChat():
     global chatStr
 
@@ -154,7 +358,11 @@ def clearChat():
     sayAndWait("Chat cleared")
 
 
-# AI chat function using Gemini
+# -------------------------
+# AI chat using Gemini
+# aiChat(query): sends conversation history + query to the Gemini model
+# and speaks/saves the reply. Requires a working `model` and
+# `config.API_KEY` configured at top of file.
 def aiChat(query):
     global chatStr
     global stop_requested
@@ -206,7 +414,13 @@ def aiChat(query):
         f.write(reply)
 
 
-# control AI mode
+# -------------------------
+# AI control and voice-command dispatcher
+# useAI(query): handles voice commands related to AI mode:
+# - "stop" -> interrupts speech
+# - "enable ai" / "disable ai" -> toggle conversation mode
+# - "clear chat" -> reset AI memory
+# When AI mode is enabled, regular commands will be sent to aiChat.
 def useAI(query):
     global ai_enabled
 
@@ -240,7 +454,11 @@ def useAI(query):
     return False
 
 
-# find correct microphone (Auto selecting the microphone)
+# -------------------------
+# Microphone selection
+# get_mic_index(): inspects connected microphones and returns the
+# index of a likely device (prefers Realtek or any with 'microphone'
+# in its name). Returns None if no suitable device found.
 def get_mic_index():
 
     # get all connected microphone names
@@ -269,51 +487,23 @@ def get_mic_index():
     return None
 
 
-# take voice command
-# take voice command
+# -------------------------
+# Capture voice input and convert to text
+# takeCommand(): listens on the selected microphone and returns the
+# recognized text (lowercased). Configurable parameters in-code:
+# - energy_threshold, dynamic_energy_threshold, pause_threshold,
+# - timeout and phrase_time_limit passed to recognizer.listen
 def takeCommand():
 
     # create speech recognizer object
     r = sr.Recognizer()
 
-    # energy threshold — controls microphone sensitivity
-    # lower value  → hears quieter voice easier
-    # higher value → ignores more background noise
-    # increase (400–600) if:
-    # - fan noise triggers false listening
-    # - keyboard sounds activate microphone
-    # decrease (100–250) if:
-    # - Nexaura is not detecting your voice
-    # - microphone volume is low
-    # common range:
-    # 150 → quiet room
-    # 300 → balanced
-    # 500+ → noisy room
-    #
-    # 200 works very well for Indian accents
-    # because softer pronunciations get detected easier
+    # Recognizer sensitivity settings (tweak if recognition is poor).
+    # energy_threshold: microphone sensitivity (lower = more sensitive).
+    # dynamic_energy_threshold: when True, adjusts automatically.
+    # pause_threshold: seconds of silence that mark end of phrase.
     r.energy_threshold = 200
-
-    # dynamic energy threshold
-    #
-    # True  → automatically adjusts microphone sensitivity
-    # False → uses fixed threshold value above
-    #
-    # True is recommended for:
-    # - Indian English accents
-    # - changing voice volume
-    # - noisy environments
     r.dynamic_energy_threshold = True
-
-    # pause threshold
-    #
-    # controls how long Nexaura waits
-    # before assuming you stopped speaking
-    #
-    # lower value  → faster response
-    # higher value → allows longer pauses while speaking
-    #
-    # 1.2 works well for Indian English speech pattern
     r.pause_threshold = 1.2
 
     mic_index = get_mic_index()
@@ -344,28 +534,10 @@ def takeCommand():
 
             print("Listening...")
 
-            # ── LISTENING TIME SETTINGS ──────────────────────────────────────────#
-            # timeout          → seconds Nexaura waits for you to START speaking    #
-            #                    increase if you need more time before you begin   #
-            #                    decrease for faster timeout                       #
-            #                                                                      #
-            # phrase_time_limit → seconds Nexaura listens after you START speaking  #
-            #                    increase if your commands are long                #
-            #                    decrease if you want faster response              #
-            #                                                                      #
-            # recommended values:                                                  #
-            # timeout=3  → fast users                                              #
-            # timeout=5  → normal usage                                            #
-            # timeout=8+ → slow speaking users                                     #
-            #                                                                      #
-            # phrase_time_limit=3  → short commands                                #
-            # phrase_time_limit=5  → balanced                                      #
-            # phrase_time_limit=10+ → long AI conversations                        #
-            #
-            # slightly increased phrase limit
-            # helps Indian English sentence completion
+            # Listening timeouts: timeout waits for user to START speaking;
+            # phrase_time_limit limits how long to listen after speech starts.
+            # Adjust the pair (timeout, phrase_time_limit) for your environment.
             audio = r.listen(source, timeout=5, phrase_time_limit=7)
-            # ─────────────────────────────────────────────────────────────────────#
 
             print("Recognizing...")
 
@@ -419,7 +591,7 @@ if __name__ == '__main__':
         ["github", "https://github.com/Sam-Dev-161127"],
         ["wikipedia", "https://www.wikipedia.org"],
         ["gmail", "https://mail.google.com"],
-        ["x", "https://www.x.com"],
+        ["twitter", "https://www.x.com"],
         ["linkedin", "https://www.linkedin.com"],
         ["amazon", "https://www.amazon.in"],
         ["flipkart", "https://www.flipkart.com"],
@@ -437,48 +609,54 @@ if __name__ == '__main__':
         ["coursera", "https://www.coursera.org"],
     ]
 
-    # Songs List
-    # Note: Your song file path/address will be different from my PC path.
-    # Change the path according to where your songs are stored on your computer.
-    # supported formats:
-    # .mp3 .wav .flac .aac .ogg
-    # example:
-    # r"D:\Music\song.mp3"
-    songs = [
-        ["majboor", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\Song\Majboor.mp3"],
-        ["cornfield", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\Song\Cornfield Chase.mp3"],
-        ["downfall", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\Song\Downfall.mp3"]
-    ]
+    # (songs and games lists removed — using shortcut folder for apps instead)
 
-    # Games List
-    # Note: Your game shortcut path/address will be different from my PC path.
-    # Change the path according to where your games or shortcuts are stored.
-    # recommended:
-    # use desktop shortcut (.lnk)
-    # instead of direct .exe file path
-    games = [
-        ["valorant", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\Game\VALORANT.lnk"],
-        ["epic games", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\Game\Epic Games Launcher.lnk"],
-        ["genshin impact", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\Game\Genshin Impact.lnk"],
-        ["steam", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\Game\Steam.lnk"]
-    ]
+    # ==========================================
+    # SHORTCUT SCANNER — launch desktop apps
+    # Place .lnk shortcut files in SHORTCUT_FOLDER. The assistant maps
+    # filenames (without .lnk) to spoken names. Example: telegram.lnk -> "telegram"
+    # ==========================================
 
-    # Apps List
-    # Note: Your application shortcut path/address will be different from my PC path.
-    # Change the path according to where your apps or shortcuts are stored.
-    # format:
-    # ["spoken app name", "shortcut path"]
-    Apps = [
-        ["word", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\Word.lnk"],
-        ["powerpoint", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\powerpoint.lnk"],
-        ["excel", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\excel.lnk"],
-        ["opera", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\Opera GX Browser .lnk"],
-        ["telegram", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\Telegram Desktop - Shortcut.lnk"],
-        ["whatsapp", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\WhatsApp - Shortcut.lnk"],
-        ["instagram", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\Instagram - Shortcut.lnk"],
-        ["chat gpt", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\ChatGPT - Shortcut.lnk"],
-        ["claude", r"C:\Users\Sam-Dev-161127\PycharmProjects\Jarvis AI\App\Claude - Shortcut.lnk"]
-    ]
+    SHORTCUT_FOLDER = r"C:\Users\Sam-Dev-161127\PycharmProjects\Nexaura\Shortcut"
+
+    # Dictionary to store shortcuts (spoken name -> shortcut path)
+    apps = {}
+
+    # SCAN SHORTCUTS
+    for shortcut in glob.glob(os.path.join(SHORTCUT_FOLDER, "*.lnk")):
+        # Get shortcut name without .lnk and normalize
+        app_name = os.path.basename(shortcut).replace(".lnk", "").lower().strip()
+        apps[app_name] = shortcut
+
+    # Loaded shortcuts are available in `apps` dict. Removed verbose print.
+
+    # CLEAN VOICE COMMAND
+    def clean_command(command):
+        remove_words = ["open", "start", "launch", "play", "please"]
+        command = command.lower()
+        for word in remove_words:
+            command = command.replace(word, "")
+        return command.strip()
+
+    # OPEN APP FUNCTION
+    def open_app(command):
+        command_clean = clean_command(command)
+
+        # exact match
+        if command_clean in apps:
+            sayAndWait("Opening " + command_clean)
+            os.startfile(apps[command_clean])
+            return True
+
+        # try fuzzy-ish matching: substring match
+        for name in apps:
+            if name in command_clean or command_clean in name:
+                sayAndWait("Opening " + name)
+                os.startfile(apps[name])
+                return True
+
+        # not found
+        return False
 
     # infinite loop for continuous listening
     # Nexaura keeps running until:
@@ -510,29 +688,12 @@ if __name__ == '__main__':
                 command_matched = True
                 break  # ← FIX: stop after first match
 
-        # play songs — sayAndWait so voice fully finishes before song starts playing
-        for song in songs:
-            if f"play {song[0]}" in query:
-                sayAndWait("Playing " + song[0])
-                os.startfile(song[1])
-                command_matched = True
-                break  # ← FIX: stop after first match
+        # play songs and games handling removed (using shortcut folder for apps)
 
-        # open games — sayAndWait so Nexaura finishes speaking before game launches
-        for game in games:
-            if f"open {game[0]}" in query:
-                sayAndWait("Opening " + game[0])
-                os.startfile(game[1])
+        # open apps using shortcuts folder
+        if any(kw in query for kw in ("open ", "start ", "launch ")):
+            if open_app(query):
                 command_matched = True
-                break  # ← FIX: stop after first match
-
-        # open apps — sayAndWait so Nexaura finishes speaking before app launches
-        for app in Apps:
-            if f"open {app[0]}" in query:
-                sayAndWait("Opening " + app[0])
-                os.startfile(app[1])
-                command_matched = True
-                break  # ← FIX: stop after first match
 
         # tell current time
         if "what time is it" in query:
@@ -583,12 +744,10 @@ if __name__ == '__main__':
         if not command_matched and ai_enabled:
             aiChat(query)
 
-# Follow Me
+# Follow Me (Sameer Patra)
 
 # GitHub   : https://github.com/Sam-Dev-161127
 # LinkedIn : https://www.linkedin.com/in/sameer-patra-2b17a83a7
 # X (Twitter) : https://x.com/Sam_Dev_161127
 # Instagram : https://www.instagram.com/sam.dev.161127
 # Telegram  : https://t.me/Sameer161127
-
-
