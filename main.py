@@ -748,44 +748,82 @@ if __name__ == '__main__':
     # ---------------------------------#
     #         SCAN SHORTCUTS           #
     # ---------------------------------#
+
+    # scan .lnk files
     for shortcut in glob.glob(os.path.join(SHORTCUT_FOLDER, "*.lnk")):
         # Get shortcut name without .lnk and normalize
         app_name = os.path.basename(shortcut).replace(".lnk", "").lower().strip()
+
         apps[app_name] = shortcut
 
-    # Loaded shortcuts are available in `apps` dict. Removed verbose print.
+    # scan .mp3 files
+    for shortcut in glob.glob(os.path.join(SHORTCUT_FOLDER, "*.mp3")):
+        # Get shortcut name without .mp3 and normalize
+        app_name = os.path.basename(shortcut).replace(".mp3", "").lower().strip()
+
+        apps[app_name] = shortcut
+
+
+    # Loaded shortcuts are available in `apps` dict.
 
     # ---------------------------------#
     #       CLEAN VOICE COMMAND        #
     # ---------------------------------#
     def clean_command(command):
-        remove_words = ["open", "start", "launch", "play", "please"]
+
+        remove_words = [
+            "open",
+            "start",
+            "launch",
+            "play",
+            "please"
+        ]
+
         command = command.lower()
+
         for word in remove_words:
             command = command.replace(word, "")
+
         return command.strip()
+
 
     # ---------------------------------#
     #       OPEN APP FUNCTION          #
     # ---------------------------------#
     def open_app(command):
+
         command_clean = clean_command(command)
 
-        # exact match
+        print("Cleaned command:", command_clean)
+
+
         if command_clean in apps:
             sayAndWait("Opening " + command_clean)
+
             os.startfile(apps[command_clean])
+
             return True
 
-        # try fuzzy-ish matching: substring match
+
         for name in apps:
-            if name in command_clean or command_clean in name:
+
+            # Example:
+            # "play believer"
+            # matches:
+            # "believer imagine dragons"
+
+            if command_clean in name or name in command_clean:
                 sayAndWait("Opening " + name)
+
                 os.startfile(apps[name])
+
                 return True
 
-        # not found
+        # ---------------------------------#
+        # not found                        #
+        # ---------------------------------#
         return False
+
 
     # ----------------------------------#
     # infinite loop for continuous      #
@@ -813,6 +851,12 @@ if __name__ == '__main__':
         # normal commands                  #
         # ---------------------------------#
         if useAI(query):
+            continue
+
+        # ---------------------------------#
+        # open apps / songs                #
+        # ---------------------------------#
+        if open_app(query):
             continue
 
         # open websites — sayAndWait so Nexaura finishes speaking before browser opens
