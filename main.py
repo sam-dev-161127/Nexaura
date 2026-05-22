@@ -870,7 +870,7 @@ if __name__ == '__main__':
         # play songs and games handling removed (using shortcut folder for apps)
 
         # open apps using shortcuts folder
-        if any(kw in query for kw in ("open ", "start ", "launch ")):
+        if any(kw in query for kw in ("open ", "start ", "launch ", "play")):
             if open_app(query):
                 command_matched = True
 
