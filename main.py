@@ -729,16 +729,16 @@ if __name__ == '__main__':
 
     # (songs and games lists removed — using shortcut folder for apps instead)
 
-    # ---------------------------------#
-    #   SHORTCUT SCANNER               #
-    #   launch desktop apps            #
-    # Place .lnk shortcut files in     #
-    # SHORTCUT_FOLDER. The assistant   #
-    # maps filenames (without .lnk)    #
-    # to spoken names.                 #
-    # Example: telegram.lnk ->         #
-    # "telegram"                       #
-    # ---------------------------------#
+    #
+    #   SHORTCUT SCANNER
+    #   launch desktop apps
+    # Place .lnk shortcut files in
+    # SHORTCUT_FOLDER. The assistant
+    # maps filenames (without .lnk)
+    # to spoken names.
+    # Example: telegram.lnk ->
+    # "telegram"
+    #
 
     SHORTCUT_FOLDER = r"C:\Users\Sam-Dev-161127\PycharmProjects\Nexaura\Shortcut"
 
@@ -940,3 +940,4 @@ if __name__ == '__main__':
 # X (Twitter) : https://x.com/Sam_Dev_161127
 # Instagram : https://www.instagram.com/sam.dev.161127
 # Telegram  : https://t.me/Sameer161127
+# Email : sam.dev1611@gmail.com
