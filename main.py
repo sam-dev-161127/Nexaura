@@ -935,9 +935,9 @@ if __name__ == '__main__':
 
 # Follow Me (Sameer Patra)
 
-# GitHub   : https://github.com/Sam-Dev-161127
-# LinkedIn : https://www.linkedin.com/in/sameer-patra-2b17a83a7
+# GitHub      : https://github.com/Sam-Dev-161127
+# LinkedIn    : https://www.linkedin.com/in/sameer-patra-2b17a83a7
 # X (Twitter) : https://x.com/Sam_Dev_161127
-# Instagram : https://www.instagram.com/sam.dev.161127
-# Telegram  : https://t.me/Sameer161127
-# Email : sam.dev1611@gmail.com
+# Instagram   : https://www.instagram.com/sam.dev.161127
+# Telegram    : https://t.me/Sameer161127
+# Email       : sam.dev1611@gmail.com
