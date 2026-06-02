@@ -918,6 +918,27 @@ if __name__ == '__main__':
             aiChat(query)
 
 # ------------------------------------------------------------
+#   About the Developer
+#
+#   👋 Hi, I'm Sameer Patra.
+#
+#   🚀 Python Developer & AI Enthusiast
+#   🤖 Creator of Nexaura
+#   🎮 Aspiring Game Developer
+#   🐧 Linux (Ubuntu) User
+#   💻 Learning C, HTML, CSS, and Advanced Python
+#   🔬 Interested in Robotics, AI, and Automation
+#
+#   🏆 Certifications
+#   • Google Certified Python Developer
+#     Certificate Verification:
+#     https://coursera.org/verify/IKPW8JE4BPJP
+#
+#   I enjoy building AI assistants, automation tools,
+#   robotics projects, and innovative software that
+#   combines technology with real-world applications.
+# ------------------------------------------------------------
+#
 #   Follow Me (Sameer Patra)
 #
 #   GitHub      : https://github.com/Sam-Dev-161127
