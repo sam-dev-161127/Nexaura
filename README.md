@@ -110,19 +110,192 @@ pip install -r requirements.txt
 
 ---
 
-## 🔑 Configure Gemini API
+## 🔑 AI API Configuration
 
-Before running Nexaura, add your Gemini API key.
+Nexaura supports multiple AI providers. Choose **any one** (or combine them) based on your preference.
 
-Example:
+---
+
+### 🟦 Option 1 — Google Gemini API
+
+Install the library:
+
+```bash
+pip install google-generativeai
+```
+
+Configure and use:
 
 ```python
 import google.generativeai as genai
 
-genai.configure(api_key="YOUR_API_KEY")
+genai.configure(api_key="YOUR_GEMINI_API_KEY")
+
+model = genai.GenerativeModel("gemini-pro")
+
+def ask_gemini(prompt):
+    response = model.generate_content(prompt)
+    return response.text
+
+# Example usage
+reply = ask_gemini("What is artificial intelligence?")
+print(reply)
 ```
 
-You can get an API key from Google AI Studio.
+> 🔗 Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+---
+
+### 🟩 Option 2 — OpenAI API (ChatGPT)
+
+Install the library:
+
+```bash
+pip install openai
+```
+
+Configure and use:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
+
+def ask_openai(prompt):
+    response = client.chat.completions.create(
+        model="gpt-4o",  # or "gpt-3.5-turbo" for a faster, cheaper option
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant named Nexaura."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.choices[0].message.content
+
+# Example usage
+reply = ask_openai("What is artificial intelligence?")
+print(reply)
+```
+
+> 🔗 Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+
+**Available Models:**
+
+| Model         | Description                        |
+| ------------- | ---------------------------------- |
+| gpt-4o        | Most capable, multimodal           |
+| gpt-4-turbo   | Fast and powerful                  |
+| gpt-3.5-turbo | Lightweight and cost-effective     |
+
+---
+
+### 🟪 Option 3 — Anthropic Claude API
+
+Install the library:
+
+```bash
+pip install anthropic
+```
+
+Configure and use:
+
+```python
+import anthropic
+
+client = anthropic.Anthropic(api_key="YOUR_ANTHROPIC_API_KEY")
+
+def ask_claude(prompt):
+    message = client.messages.create(
+        model="claude-sonnet-4-5",  # or "claude-haiku-4-5" for faster responses
+        max_tokens=1024,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return message.content[0].text
+
+# Example usage
+reply = ask_claude("What is artificial intelligence?")
+print(reply)
+```
+
+> 🔗 Get your API key from [Anthropic Console](https://console.anthropic.com/)
+
+**Available Models:**
+
+| Model                | Description                        |
+| -------------------- | ---------------------------------- |
+| claude-opus-4-5      | Most powerful, best reasoning      |
+| claude-sonnet-4-5    | Balanced speed and intelligence    |
+| claude-haiku-4-5     | Fastest and most lightweight       |
+
+---
+
+### 🟥 Option 4 — DeepSeek API
+
+Install the library:
+
+```bash
+pip install openai  # DeepSeek uses the OpenAI-compatible SDK
+```
+
+Configure and use:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_DEEPSEEK_API_KEY",
+    base_url="https://api.deepseek.com"
+)
+
+def ask_deepseek(prompt):
+    response = client.chat.completions.create(
+        model="deepseek-chat",  # or "deepseek-reasoner" for step-by-step reasoning
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant named Nexaura."},
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.choices[0].message.content
+
+# Example usage
+reply = ask_deepseek("What is artificial intelligence?")
+print(reply)
+```
+
+> 🔗 Get your API key from [DeepSeek Platform](https://platform.deepseek.com/)
+
+**Available Models:**
+
+| Model               | Description                              |
+| ------------------- | ---------------------------------------- |
+| deepseek-chat       | General purpose, fast responses          |
+| deepseek-reasoner   | Advanced step-by-step reasoning (R1)     |
+
+---
+
+### 🔀 Switching Between APIs in main.py
+
+You can easily switch between providers with a simple config variable:
+
+```python
+# Set your preferred AI provider: "gemini", "openai", "claude", "deepseek"
+AI_PROVIDER = "gemini"
+
+def get_ai_response(prompt):
+    if AI_PROVIDER == "gemini":
+        return ask_gemini(prompt)
+    elif AI_PROVIDER == "openai":
+        return ask_openai(prompt)
+    elif AI_PROVIDER == "claude":
+        return ask_claude(prompt)
+    elif AI_PROVIDER == "deepseek":
+        return ask_deepseek(prompt)
+    else:
+        return "No AI provider configured."
+```
+
+This way, you only need to change one line to switch providers.
 
 ---
 
