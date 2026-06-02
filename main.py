@@ -9,69 +9,69 @@ import random                         # Used for random replies, songs, jokes, c
 import threading                      # Runs multiple tasks at the same time (multitasking)
 import win32com.client                # Windows built-in text to speech | pip install pywin32
 
-# ============================================================
-#   Nexaura — Your Personal Voice Assistant
+# ------------------------------------------------------------
+#   Nexaura - Your Personal Voice Assistant
 #   main.py  |  Entry point
 #
 #   What this assistant can do:
-#   ─────────────────────────────────────────────────────────
-#   • Listen to your voice and understand commands
-#   • Open websites by saying "open youtube", "open google", etc.
-#   • Launch desktop apps from a shortcut folder
-#   • Chat with Google Gemini AI when AI mode is enabled
-#   • Tell you the current time and date
-#   • Stop speaking instantly when you say "stop"
+#   ------------------------------------------------
+#   - Listen to your voice and understand commands
+#   - Open websites by saying "open youtube", "open google", etc.
+#   - Launch desktop apps from a shortcut folder
+#   - Chat with Google Gemini AI when AI mode is enabled
+#   - Tell you the current time and date
+#   - Stop speaking instantly when you say "stop"
 #
 #   How to get started:
-#   ─────────────────────────────────────────────────────────
+#   ------------------------------------------------
 #   1. Put your API key inside config.py like this:
-#         API_KEY = "your-gemini-api-key-here"
+#         API_KEY - "your-gemini-api-key-here"
 #
 #   2. Place your app shortcuts (.lnk files) inside the
 #      folder path set in SHORTCUT_FOLDER below.
-#      Example: telegram.lnk → say "open telegram"
+#      Example: telegram.lnk -> say "open telegram"
 #
 #   3. Run the script:
 #         python main.py
 #
 #   Voice commands you can use:
-#   ─────────────────────────────────────────────────────────
-#   "open youtube"      → opens YouTube in browser
-#   "open telegram"     → launches telegram from shortcuts
-#   "what time is it"   → tells current time
-#   "what date is it"   → tells today's date
-#   "enable ai"         → switches to Gemini AI chat mode
-#   "disable ai"        → switches back to normal mode
-#   "clear chat"        → wipes AI conversation memory
-#   "stop"              → immediately stops Nexaura speaking
+#   ------------------------------------------------
+#   "open youtube"      -> opens YouTube in browser
+#   "open telegram"     -> launches telegram from shortcuts
+#   "what time is it"   -> tells current time
+#   "what date is it"   -> tells today\'s date
+#   "enable ai"         -> switches to Gemini AI chat mode
+#   "disable ai"        -> switches back to normal mode
+#   "clear chat"        -> wipes AI conversation memory
+#   "stop"              -> immediately stops Nexaura speaking
 #
 #   Technical notes for developers:
-#   ─────────────────────────────────────────────────────────
-#   • TTS (text-to-speech) uses Windows SAPI via win32com.
+#   ------------------------------------------------
+#   - TTS (text-to-speech) uses Windows SAPI via win32com.
 #     This is Windows-only. For cross-platform, use pyttsx3.
-#   • Speech recognition uses Google's free API (en-IN locale
+#   - Speech recognition uses Google\'s free API (en-IN locale
 #     works best for Indian accent and Hinglish words).
-#   • Gemini is called via google.genai (new SDK).
+#   - Gemini is called via google.genai (new SDK).
 #     Install it: pip install --upgrade google-genai
-#   • App matching is case-insensitive substring matching.
+#   - App matching is case-insensitive substring matching.
 #     You can improve it with fuzzy matching (fuzzywuzzy lib).
 #
 #   Author: Sameer Patra
 #   GitHub : https://github.com/Sam-Dev-161127
-# ============================================================
+# ------------------------------------------------------------
 
 
 # ────────────────────────────────────────────────────────────
 #   Text-to-Speech Engine Setup
 #
 #   We use Windows SAPI through win32com.
-#   Think of `speaker` as Nexaura's voice box —
+#   Think of `speaker` as Nexaura\'s voice box -
 #   everything Nexaura says goes through this object.
 #
 #   speaker.Speak(text, flag) controls HOW it speaks:
-#     flag = 0  →  speak and wait (blocking)
-#     flag = 1  →  speak in background (non-blocking)
-#     flag = 3  →  cancel all speech immediately
+#     flag - 0  ->  speak and wait (blocking)
+#     flag - 1  ->  speak in background (non-blocking)
+#     flag - 3  ->  cancel all speech immediately
 # ────────────────────────────────────────────────────────────
 speaker = win32com.client.Dispatch("SAPI.SpVoice")
 
@@ -103,13 +103,13 @@ chatStr = ""
 # ────────────────────────────────────────────────────────────
 #   AI Mode Toggle
 #
-#   False → Normal mode  (Nexaura handles commands like
+#   False -> Normal mode  (Nexaura handles commands like
 #                          opening apps, telling time, etc.)
-#   True  → AI mode      (Everything you say goes to Gemini)
+#   True  -> AI mode      (Everything you say goes to Gemini)
 #
 #   Switch with voice:
-#     "enable ai"   →  turns AI mode ON
-#     "disable ai"  →  turns AI mode OFF
+#     "enable ai"   ->  turns AI mode ON
+#     "disable ai"  ->  turns AI mode OFF
 # ────────────────────────────────────────────────────────────
 ai_enabled = False
 
@@ -118,12 +118,12 @@ ai_enabled = False
 #   Gemini AI Setup
 #
 #   We try to import the new google.genai SDK first.
-#   If it's not installed, AI features will be disabled
-#   and we'll print a message telling you what to install.
+#   If it\'s not installed, AI features will be disabled
+#   and we\'ll print a message telling you what to install.
 #
 #   After import, we try to create:
-#     - `client`  →  the main Gemini API client object
-#     - `model`   →  only used as fallback for legacy SDK
+#     - `client`  ->  the main Gemini API client object
+#     - `model`   ->  only used as fallback for legacy SDK
 #
 #   The actual API call happens inside call_gemini() below.
 # ────────────────────────────────────────────────────────────
@@ -131,16 +131,16 @@ try:
     import google.genai as genai
     NEW_GENAI = True
 except Exception:
-    # If google.genai isn't installed, disable AI completely.
-    # Don't fall back to google.generativeai — it's deprecated
+    # If google.genai isn\'t installed, disable AI completely.
+    # Don\'t fall back to google.generativeai - it\'s deprecated
     # and throws FutureWarnings everywhere.
     genai = None
     NEW_GENAI = False
-    print("─" * 60)
-    print("  google.genai not installed — AI features disabled.")
+    print("-" * 60)
+    print("  google.genai not installed - AI features disabled.")
     print("  To enable AI, run:")
     print("    pip install --upgrade google-genai")
-    print("─" * 60)
+    print("-" * 60)
 
 
 # ────────────────────────────────────────────────────────────
@@ -148,10 +148,10 @@ except Exception:
 #
 #   We support two styles depending on the SDK version:
 #
-#   New SDK  → genai.Client(api_key=...)
+#   New SDK  -> genai.Client(api_key - ...)
 #              Use client.models.generate_content(...)
 #
-#   Old SDK  → genai.configure(api_key=...)
+#   Old SDK  -> genai.configure(api_key - ...)
 #              Use genai.GenerativeModel(...).generate_content(...)
 #
 #   We always prefer the new SDK. The old one is kept only
@@ -186,7 +186,7 @@ if genai is not None:
 # ────────────────────────────────────────────────────────────
 #   Gemini API: Print which backend is active
 #
-#   This runs once at startup so you know what's working.
+#   This runs once at startup so you know what\'s working.
 #   If you see "none available" it means something went wrong
 #   during the import or auth steps above.
 # ────────────────────────────────────────────────────────────
@@ -211,27 +211,27 @@ except Exception as e:
 #
 #   This is the ONLY place where we talk to the Gemini API.
 #   Pass in the full conversation string (chatStr) and it
-#   returns Gemini's reply as plain text.
+#   returns Gemini\'s reply as plain text.
 #
 #   It tries two paths in order:
-#     1. New SDK  → client.models.generate_content(...)
-#     2. Old SDK  → model.generate_content(...)  (fallback)
+#     1. New SDK  -> client.models.generate_content(...)
+#     2. Old SDK  -> model.generate_content(...)  (fallback)
 #
-#   Returns "" if both fail, so the rest of the code doesn't
-#   crash — it just handles the empty string gracefully.
+#   Returns "" if both fail, so the rest of the code doesn\'t
+#   crash - it just handles the empty string gracefully.
 #
 #   WHY THIS FUNCTION EXISTS:
-#   ─────────────────────────
+#   --------------------------
 #   The old code used a GenAICompat wrapper class that was
 #   accidentally calling itself in a loop, so generate_content
-#   always returned "" silently. That's why questions like
+#   always returned "" silently. That\'s why questions like
 #   "what is python" never got a response. This function
 #   replaces that broken wrapper with a clean, direct call.
 # ────────────────────────────────────────────────────────────
 def call_gemini(prompt):
 
     # Path 1: New google.genai SDK
-    # Uses client.models.generate_content() — the correct
+    # Uses client.models.generate_content() - the correct
     # way to call Gemini in the new SDK (2024+)
     if client is not None and hasattr(client, "models"):
         try:
@@ -253,7 +253,7 @@ def call_gemini(prompt):
             print("Gemini legacy SDK error:", e)
 
     # If both failed, tell the developer and return empty
-    print("Gemini: no working backend found — check your API key and SDK install")
+    print("Gemini: no working backend found - check your API key and SDK install")
     return ""
 
 
@@ -263,19 +263,19 @@ def call_gemini(prompt):
 #   AI responses often come back with markdown formatting:
 #   **bold**, # headings, `code blocks`, [links](url), etc.
 #   That looks fine in a chat UI but sounds terrible when
-#   spoken out loud — "hashtag hashtag Introduction" is awful.
+#   spoken out loud - "hashtag hashtag Introduction" is awful.
 #
 #   This function strips all of that and returns clean,
 #   natural-sounding text suitable for TTS.
 #
 #   What it removes:
-#     **bold** / *italic*  →  just the text inside
-#     ## Headings          →  removed entirely
-#     `code` blocks        →  removed entirely
-#     [link text](url)     →  keeps only "link text"
-#     - bullet points      →  removed
-#     multiple newlines    →  replaced with single space
-#     double spaces        →  collapsed to one
+#     **bold** / *italic*  ->  just the text inside
+#     ## Headings          ->  removed entirely
+#     `code` blocks        ->  removed entirely
+#     [link text](url)     ->  keeps only "link text"
+#     - bullet points      ->  removed
+#     multiple newlines    ->  replaced with single space
+#     double spaces        ->  collapsed to one
 # ────────────────────────────────────────────────────────────
 def clean_for_speech(text):
 
@@ -289,7 +289,7 @@ def clean_for_speech(text):
     text = re.sub(r'`{1,3}.*?`{1,3}', '', text)
 
     # Remove markdown links but keep the visible text
-    # Example: [Google](https://google.com) → "Google"
+    # Example: [Google](https://google.com) -> "Google"
     # We do this manually instead of regex to avoid edge cases
     def _strip_md_links(s):
         out_parts = []
@@ -325,11 +325,11 @@ def clean_for_speech(text):
 
 
 # ────────────────────────────────────────────────────────────
-#   sayAndWait(text)  —  Speak and BLOCK until done
+#   sayAndWait(text)  -  Speak and BLOCK until done
 #
 #   Use this when you need Nexaura to FINISH talking before
-#   doing something else — like opening a browser or an app.
-#   If you don't wait, the app launches while Nexaura is still
+#   doing something else - like opening a browser or an app.
+#   If you don\'t wait, the app launches while Nexaura is still
 #   mid-sentence, which feels broken.
 #
 #   It also splits long text into individual sentences before
@@ -348,7 +348,7 @@ def sayAndWait(text):
     # Clean markdown before speaking
     text = clean_for_speech(text)
 
-    # Don't even start if a stop was already requested
+    # Don\'t even start if a stop was already requested
     if stop_requested:
         return
 
@@ -361,14 +361,14 @@ def sayAndWait(text):
 
     for sentence in sentences:
 
-        # Check between sentences — stop immediately if requested
+        # Check between sentences - stop immediately if requested
         if stop_requested:
             # SVSFPurgeBeforeSpeak flag (3):
             # clears the current speech AND the queue instantly
             speaker.Speak("", 3)
             break
 
-        # flag 0 = speak and wait (blocking)
+        # flag 0 - speak and wait (blocking)
         speaker.Speak(sentence, 0)
 
     # Reset flags once done
@@ -377,13 +377,13 @@ def sayAndWait(text):
 
 
 # ────────────────────────────────────────────────────────────
-#   say(text)  —  Speak in the BACKGROUND (non-blocking)
+#   say(text)  -  Speak in the BACKGROUND (non-blocking)
 #
-#   Use this for long AI replies where you don't want the
+#   Use this for long AI replies where you don\'t want the
 #   program to freeze while Nexaura is talking. It spins up
 #   a background thread that calls sayAndWait internally.
 #
-#   The thread is marked as daemon=True so it auto-closes
+#   The thread is marked as daemon - True so it auto-closes
 #   when the main program exits (no zombie threads).
 # ────────────────────────────────────────────────────────────
 def say(text):
@@ -391,14 +391,14 @@ def say(text):
 
 
 # ────────────────────────────────────────────────────────────
-#   stopSpeaking()  —  Shut Nexaura up immediately
+#   stopSpeaking()  -  Shut Nexaura up immediately
 #
 #   Sets the stop flag AND purges the SAPI speech queue so
 #   Nexaura goes silent within milliseconds. Called when
 #   the user says "stop" during any speech.
 #
 #   The SVSFPurgeBeforeSpeak flag (3) tells SAPI to:
-#     - Drop the word it's currently speaking
+#     - Drop the word it\'s currently speaking
 #     - Clear everything waiting in the queue
 #   Result: instant silence.
 # ────────────────────────────────────────────────────────────
@@ -410,7 +410,7 @@ def stopSpeaking():
         stop_requested = True
         is_speaking = False
 
-        # Flag 3 = SVSFPurgeBeforeSpeak — kills speech instantly
+        # Flag 3 - SVSFPurgeBeforeSpeak - kills speech instantly
         speaker.Speak("", 3)
 
         print("Nexaura stopped speaking")
@@ -420,7 +420,7 @@ def stopSpeaking():
 
 
 # ────────────────────────────────────────────────────────────
-#   clearChat()  —  Wipe the AI conversation memory
+#   clearChat()  -  Wipe the AI conversation memory
 #
 #   Resets chatStr to empty so Gemini starts fresh with no
 #   previous context. Useful when:
@@ -438,9 +438,9 @@ def clearChat():
 
 
 # ────────────────────────────────────────────────────────────
-#   aiChat(query)  —  Send your question to Gemini and reply
+#   aiChat(query)  -  Send your question to Gemini and reply
 #
-#   This is the core AI function. Here's exactly what happens:
+#   This is the core AI function. Here\'s exactly what happens:
 #
 #     1. Your question gets added to chatStr
 #        (so Gemini has full context of the conversation)
@@ -448,13 +448,13 @@ def clearChat():
 #     2. chatStr is sent to Gemini via call_gemini()
 #        (the whole conversation, not just this one question)
 #
-#     3. Gemini's reply gets added to chatStr too
+#     3. Gemini\'s reply gets added to chatStr too
 #        (so future questions can reference this answer)
 #
 #     4. The reply is printed and spoken aloud
 #
 #     5. A text file with the reply is saved to the Gemini/ folder
-#        (named after your question, so it's easy to find later)
+#        (named after your question, so it\'s easy to find later)
 #
 #   NOTE: The full chat history is printed to the terminal
 #   after every exchange so you can follow the conversation.
@@ -466,7 +466,7 @@ def aiChat(query):
     # Always reset stop flag before a new AI reply starts
     stop_requested = False
 
-    # Add user's message to conversation history
+    # Add user\'s message to conversation history
     chatStr += f"Sam: {query}\nNexaura: "
 
     # Send the full conversation to Gemini and get a reply
@@ -477,33 +477,33 @@ def aiChat(query):
         sayAndWait("Sorry Sam, I could not get a response. Please check your API key or internet connection.")
         return
 
-    # Add Gemini's reply to the conversation history
+    # Add Gemini\'s reply to the conversation history
     chatStr += f"{reply}\n"
 
     # ── Print full chat history to terminal ──────────────────
     # This lets you see the whole conversation so far,
     # which is useful for debugging and following along.
-    print("\n" + "─" * 50)
+    print("\n" + "-" * 50)
     print("  Chat History")
-    print("─" * 50)
+    print("-" * 50)
     print(chatStr.strip())
-    print("─" * 50 + "\n")
+    print("-" * 50 + "\n")
 
-    # Speak the reply in the background so the program doesn't freeze
+    # Speak the reply in the background so the program doesn\'t freeze
     say(reply)
 
     # ── Save reply to a text file ─────────────────────────────
-    # Creates a Gemini/ folder if it doesn't exist yet.
+    # Creates a Gemini/ folder if it doesn\'t exist yet.
     # Each conversation is saved as a .txt file named after
-    # the query — handy for reviewing past AI answers.
+    # the query - handy for reviewing past AI answers.
     if not os.path.exists("Gemini"):
         os.mkdir("Gemini")
 
     # Clean up the query to use as a filename
     filename = query.replace("using artificial intelligence", "").strip()
 
-    # Windows doesn't allow these characters in filenames:
-    # \ / : * ? " < > |   ← strip them all out
+    # Windows doesn\'t allow these characters in filenames:
+    # \ / : * ? " < > |   <- strip them all out
     filename = re.sub(r'[\\/:*?"<>|]', '', filename).strip()
 
     # If the query was empty or got fully stripped, use a random name
@@ -516,15 +516,15 @@ def aiChat(query):
 
 
 # ────────────────────────────────────────────────────────────
-#   useAI(query)  —  Handle AI-related voice commands
+#   useAI(query)  -  Handle AI-related voice commands
 #
 #   This runs BEFORE any other command processing.
 #   It intercepts AI control commands ("stop", "enable ai",
 #   "disable ai", "clear chat") and routes everything else
 #   to aiChat() if AI mode is currently on.
 #
-#   Returns True  →  command was handled (skip further checks)
-#   Returns False →  not an AI command (keep checking below)
+#   Returns True  ->  command was handled (skip further checks)
+#   Returns False ->  not an AI command (keep checking below)
 #
 #   "stop" is always checked FIRST so it works even while
 #   Nexaura is mid-sentence during an AI reply.
@@ -533,7 +533,7 @@ def useAI(query):
     global ai_enabled
 
     # ── "stop" should ALWAYS work, even inside AI mode ───────
-    # Check this before anything else so it can't be blocked
+    # Check this before anything else so it can\'t be blocked
     if "stop" in query:
         stopSpeaking()
         return True
@@ -560,12 +560,12 @@ def useAI(query):
         aiChat(query)
         return True
 
-    # Not an AI-related command — let the normal handler deal with it
+    # Not an AI-related command - let the normal handler deal with it
     return False
 
 
 # ────────────────────────────────────────────────────────────
-#   get_mic_index()  —  Find the right microphone to use
+#   get_mic_index()  -  Find the right microphone to use
 #
 #   Scans all connected audio input devices and returns
 #   the index of the best microphone found.
@@ -573,9 +573,9 @@ def useAI(query):
 #   Priority order:
 #     1. Realtek microphone (common on laptops/desktops)
 #     2. Any device with "microphone" in the name
-#     3. None — if nothing is found
+#     3. None - if nothing is found
 #
-#   The index is then passed to sr.Microphone(device_index=...)
+#   The index is then passed to sr.Microphone(device_index - ...)
 #   so we use the correct mic and not some random audio input.
 # ────────────────────────────────────────────────────────────
 def get_mic_index():
@@ -598,41 +598,41 @@ def get_mic_index():
         if "microphone" in mic_name:
             return i
 
-    # No suitable microphone found — will be handled in takeCommand()
+    # No suitable microphone found - will be handled in takeCommand()
     return None
 
 
 # ────────────────────────────────────────────────────────────
-#   takeCommand()  —  Listen and convert speech to text
+#   takeCommand()  -  Listen and convert speech to text
 #
 #   Opens the microphone, listens for your voice, and returns
 #   the recognized text in lowercase. Returns "" on failure.
 #
 #   What each setting does:
-#   ─────────────────────────────────────────────────────────
-#   energy_threshold        → mic sensitivity (lower = picks
+#   ------------------------------------------------
+#   energy_threshold        -> mic sensitivity (lower - picks
 #                             up quieter sounds; 200 is good
 #                             for most quiet rooms)
 #
-#   dynamic_energy_threshold → True = auto-adjusts the threshold
+#   dynamic_energy_threshold -> True - auto-adjusts threshold
 #                              based on ambient noise levels
 #
-#   pause_threshold          → seconds of silence after you stop
+#   pause_threshold          -> seconds of silence after you stop
 #                              speaking before it stops listening
 #                              (1.2s gives a natural pause)
 #
-#   adjust_for_ambient_noise → calibrates to room noise before
+#   adjust_for_ambient_noise -> calibrates to room noise before
 #                              listening (2s recommended for
 #                              Indian environments with fans/AC)
 #
-#   timeout                  → max seconds to wait for you to
+#   timeout                  -> max seconds to wait for you to
 #                              START speaking (5s then gives up)
 #
-#   phrase_time_limit        → max seconds to listen once you've
+#   phrase_time_limit        -> max seconds to listen once you\'ve
 #                              started speaking (7s is enough
 #                              for most commands)
 #
-#   language='en-IN'         → Indian English — gives best results
+#   language - 'en-IN'       -> Indian English - gives best results
 #                              for Indian accents, Hinglish words,
 #                              and Indian names/pronunciations
 # ────────────────────────────────────────────────────────────
@@ -649,14 +649,14 @@ def takeCommand():
 
     # If no mic is found, skip this loop iteration
     if mic_index is None:
-        print("No microphone found — check your audio input devices")
+        print("No microphone found - check your audio input devices")
         return ""
 
     try:
         with sr.Microphone(device_index=mic_index) as source:
 
             # Calibrate to background noise before listening
-            # Increase to 2.0+ if you're in a noisy environment
+            # Increase to 2.0+ if you\'re in a noisy environment
             r.adjust_for_ambient_noise(source, duration=2)
 
             print("Listening...")
@@ -675,12 +675,12 @@ def takeCommand():
             return query.lower()
 
     except sr.WaitTimeoutError:
-        # You didn't start speaking within 5 seconds — that's fine, just loop
-        print("Listening timeout — no speech detected")
+        # You didn\'t start speaking within 5 seconds - that\'s fine, just loop
+        print("Listening timeout - no speech detected")
         return ""
 
     except sr.UnknownValueError:
-        # Could hear something but couldn't understand it
+        # Could hear something but couldn\'t understand it
         print("Could not understand audio")
         sayAndWait("Sorry Sam, I could not understand. Could you say that again?")
         return ""
@@ -691,15 +691,15 @@ def takeCommand():
         return ""
 
 
-# ============================================================
-#   MAIN PROGRAM — Everything below runs when you start Nexaura
-# ============================================================
+# ------------------------------------------------------------
+#   MAIN PROGRAM - Everything below runs when you start Nexaura
+# ------------------------------------------------------------
 
 if __name__ == '__main__':
 
-    print("=" * 50)
-    print("  Nexaura started — listening for your voice")
-    print("=" * 50)
+    print("-" * 50)
+    print("  Nexaura started - listening for your voice")
+    print("-" * 50)
 
     sayAndWait("I am Nexaura AI")
 
@@ -739,23 +739,23 @@ if __name__ == '__main__':
 
 
     # ────────────────────────────────────────────────────────
-    #   Shortcut Folder — Launch Desktop Apps by Voice
+    #   Shortcut Folder - Launch Desktop Apps by Voice
     #
     #   Place .lnk (shortcut) or .mp3 files in this folder.
     #   Nexaura scans them at startup and builds a dictionary
-    #   mapping the filename → full path.
+    #   mapping the filename -> full path.
     #
     #   How it works:
-    #     • telegram.lnk  → say "open telegram"
-    #     • vscode.lnk    → say "open vscode"
-    #     • believer.mp3  → say "play believer"
+    #     - telegram.lnk  -> say "open telegram"
+    #     - vscode.lnk    -> say "open vscode"
+    #     - believer.mp3  -> say "play believer"
     #
     #   Change SHORTCUT_FOLDER to your own folder path.
-    #   Make sure the folder exists or you'll get no apps loaded.
+    #   Make sure the folder exists or you\'ll get no apps loaded.
     # ────────────────────────────────────────────────────────
     SHORTCUT_FOLDER = r"C:\Users\Sam-Dev-161127\PycharmProjects\Nexaura\Shortcut"
 
-    # This dictionary maps spoken name → full file path
+    # This dictionary maps spoken name -> full file path
     # It gets populated by the scanner below
     apps = {}
 
@@ -803,8 +803,8 @@ if __name__ == '__main__':
     #   `apps` dictionary and launches it using os.startfile().
     #
     #   Two matching strategies:
-    #     1. Exact match  → "telegram" matches "telegram"
-    #     2. Partial match → "believer" matches "believer imagine dragons"
+    #     1. Exact match   -> "telegram" matches "telegram"
+    #     2. Partial match -> "believer" matches "believer imagine dragons"
     #                        "play imagine" also matches it
     #
     #   Returns True if an app was launched, False if not found.
@@ -835,8 +835,8 @@ if __name__ == '__main__':
         return False
 
 
-    # ============================================================
-    #   MAIN LOOP — Nexaura listens forever until you close it
+    # ------------------------------------------------------------
+    #   MAIN LOOP - Nexaura listens forever until you close it
     #
     #   Every iteration:
     #     1. Listen for a voice command
@@ -844,13 +844,13 @@ if __name__ == '__main__':
     #     3. Try to open an app from the shortcuts folder
     #     4. Try to open a website from the sites list
     #     5. Tell time or date if asked
-    #     6. If AI mode is on and nothing matched → send to Gemini
-    # ============================================================
+    #     6. If AI mode is on and nothing matched -> send to Gemini
+    # ------------------------------------------------------------
     while True:
 
         query = takeCommand()
 
-        # Nothing was heard — just keep listening
+        # Nothing was heard - just keep listening
         if query == "":
             continue
 
@@ -889,7 +889,7 @@ if __name__ == '__main__':
             now = datetime.datetime.now()
 
             # 12-hour format with AM/PM
-            # %I = hour (12-hour), %M = minutes, %p = AM/PM
+            # %I - hour (12-hour), %M - minutes, %p - AM/PM
             hour   = now.strftime("%I")
             minute = now.strftime("%M")
             am_pm  = now.strftime("%p")
@@ -897,12 +897,12 @@ if __name__ == '__main__':
             sayAndWait(f"The time is {hour}:{minute} {am_pm}")
             command_matched = True
 
-        # ── Step 6: Tell today's date ──────────────────────────
+        # ── Step 6: Tell today\'s date ──────────────────────────
         if "what date is it" in query:
             now = datetime.datetime.now()
 
             # Full human-readable date: "Monday, 11 May 2026"
-            # %A = full weekday, %d = day, %B = full month, %Y = year
+            # %A - full weekday, %d - day, %B - full month, %Y - year
             day_name = now.strftime("%A")
             day      = now.strftime("%d")
             month    = now.strftime("%B")
@@ -917,8 +917,7 @@ if __name__ == '__main__':
         if not command_matched and ai_enabled:
             aiChat(query)
 
-
-# ============================================================
+# ------------------------------------------------------------
 #   Follow Me (Sameer Patra)
 #
 #   GitHub      : https://github.com/Sam-Dev-161127
@@ -927,4 +926,4 @@ if __name__ == '__main__':
 #   Instagram   : https://www.instagram.com/sam.dev.161127
 #   Telegram    : https://t.me/Sameer161127
 #   Email       : sam.dev1611@gmail.com
-# ============================================================
+# ------------------------------------------------------------
