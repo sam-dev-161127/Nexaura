@@ -93,7 +93,7 @@ NEXAURA/
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/Sam-Dev-161127/Nexaura.git
+git clone https://github.com/sam-dev-161127/Nexaura.git
 ```
 
 ### 2️⃣ Navigate to the Project Folder
