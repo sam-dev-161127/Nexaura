@@ -917,34 +917,34 @@ if __name__ == '__main__':
         if not command_matched and ai_enabled:
             aiChat(query)
 
-# ------------------------------------------------------------
-#   About the Developer
-#
-#   👋 Hi, I'm Sameer Patra.
-#
-#   🚀 Python Developer & AI Enthusiast
-#   🤖 Creator of Nexaura
-#   🎮 Aspiring Game Developer
-#   🐧 Linux (Ubuntu) User
-#   💻 Learning C, HTML, CSS, and Advanced Python
-#   🔬 Interested in Robotics, AI, and Automation
-#
-#   🏆 Certifications
-#   • Google Certified Python Developer
-#     Certificate Verification:
-#     https://coursera.org/verify/IKPW8JE4BPJP
-#
-#   I enjoy building AI assistants, automation tools,
-#   robotics projects, and innovative software that
-#   combines technology with real-world applications.
-# ------------------------------------------------------------
-#
-#   Follow Me (Sameer Patra)
-#
-#   GitHub      : https://github.com/Sam-Dev-161127
-#   LinkedIn    : https://www.linkedin.com/in/sameer-patra-2b17a83a7
-#   X (Twitter) : https://x.com/Sam_Dev_161127
-#   Instagram   : https://www.instagram.com/sam.dev.161127
-#   Telegram    : https://t.me/Sameer161127
-#   Email       : sam.dev1611@gmail.com
-# ------------------------------------------------------------
+# -------------------------------------------------------------------#
+#   About the Developer                                              #
+#                                                                    #
+#   👋 Hi, I'm Sameer Patra.                                         #
+#                                                                    #
+#   🚀 Python Developer & AI Enthusiast                              #
+#   🤖 Creator of Nexaura                                            #
+#   🎮 Aspiring Game Developer                                       #
+#   🐧 Linux (Ubuntu) User                                           #
+#   💻 Learning C, HTML, CSS, and Advanced Python                    #
+#   🔬 Interested in Robotics, AI, and Automation                    #
+#                                                                    #
+#   🏆 Certifications                                                #
+#   • Google Certified Python Developer                              #
+#     Certificate Verification:                                      #
+#     https://coursera.org/verify/IKPW8JE4BPJP                       #
+#                                                                    #
+#   I enjoy building AI assistants, automation tools,                #
+#   robotics projects, and innovative software that                  #
+#   combines technology with real-world applications.                #
+# -------------------------------------------------------------------#
+#                                                                    #
+#   Follow Me (Sameer Patra)                                         #
+#                                                                    #
+#   GitHub      : https://github.com/Sam-Dev-161127                  #
+#   LinkedIn    : https://www.linkedin.com/in/sameer-patra-2b17a83a7 #
+#   X (Twitter) : https://x.com/Sam_Dev_161127                       #
+#   Instagram   : https://www.instagram.com/sam.dev.161127           #
+#   Telegram    : https://t.me/Sameer161127                          #
+#   Email       : sam.dev1611@gmail.com                              #
+# -------------------------------------------------------------------#
